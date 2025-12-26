@@ -4,6 +4,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 public class ReservationController {
 
@@ -20,6 +22,12 @@ public class ReservationController {
             ) {
         System.out.println("call: getReservationById");
         return reservationService.getReservationById(id);
+    }
+
+    @GetMapping("/api/get")
+    public List<Reservation> getAllReservations() {
+        System.out.println("call: getAllReservations");
+        return reservationService.findAllReservations();
     }
 
 }
