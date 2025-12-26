@@ -3,42 +3,41 @@ package com.gerwld.reservation_system;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class ReservationService {
+    private static Map<Long, Reservation>  reservationMap;
+    private static AtomicLong idCounter; // long для многопоточной среды
+    public ReservationService() {
+        reservationMap = new HashMap<Long, Reservation>();
+        idCounter = new AtomicLong();
+    }
 
-    private final Map<Long, Reservation> reservationMap = Map.of(
-            1L,
-            new Reservation(
-                    0L,
-                    100L,
-                    40L,
-                    LocalDate.now(),
-                    LocalDate.now().plusDays(5),
-                    ReservatiomStatus.APPROVED
-            ),
-            2L,
-            new Reservation(
-                    1L,
-                    90L,
-                    490L,
-                    LocalDate.now(),
-                    LocalDate.now().plusDays(5),
-                    ReservatiomStatus.APPROVED
-            ),
-            3L,
-            new Reservation(
-                    0L,
-                    100L,
-                    40L,
-                    LocalDate.now(),
-                    LocalDate.now().plusDays(5),
-                    ReservatiomStatus.APPROVED
-            )
-    );
+    public static Reservation createReservation(Reservation reservationToCreate) {
+        if(reservationToCreate.id() != null) {
+            throw new IllegalArgumentException("id should be empty");
+        }
+        if(reservationToCreate.status() != null) {
+            throw new IllegalArgumentException("status should be empty");
+        }
+
+        var newReservation = new Reservation(
+                idCounter.incrementAndGet(),
+                reservationToCreate.roomId(),
+                reservationToCreate.userId(),
+                reservationToCreate.startDate(),
+                reservationToCreate.endDate(),
+                ReservatiomStatus.PENDING
+        );
+
+        reservationMap.put(newReservation.id(), newReservation);
+        return reservationMap.get(newReservation.id());
+    }
 
     public Reservation getReservationById(
             Long id
