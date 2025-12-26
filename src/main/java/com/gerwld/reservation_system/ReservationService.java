@@ -1,8 +1,9 @@
 package com.gerwld.reservation_system;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,15 @@ public class ReservationService {
 
         reservationMap.put(newReservation.id(), newReservation);
         return reservationMap.get(newReservation.id());
+    }
+
+    public void deleteReservation(
+            Long id
+    ) {
+        if(!reservationMap.containsKey(id)) {
+            throw new NoSuchElementException("Not found reservation by id: " + id);
+        }
+        reservationMap.remove(id);
     }
 
     public Reservation getReservationById(

@@ -7,8 +7,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
+@RequestMapping("/api/reservation")
 public class ReservationController {
 
     private static final Logger log = LoggerFactory.getLogger(ReservationController.class);
@@ -18,23 +20,29 @@ public class ReservationController {
         this.reservationService = reservationService;
     }
 
-    @GetMapping("/api/reservations/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<Reservation> getReservationById(
             @PathVariable("id") Long id
             ) {
         log.info("Called getReservationById, id: "+id);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(reservationService.getReservationById(id));
+
+        try {
+           Reservation reservation = reservationService.getReservationById(id);
+            return ResponseEntity.status(HttpStatus.OK).body(reservation);
+        }
+        catch (NoSuchElementException e) {
+            return ResponseEntity.status(404).build();
+        }
     }
 
-    @GetMapping("/api/reservations")
+    @GetMapping()
     public ResponseEntity<List<Reservation>> getAllReservations() {
         log.info("Called getAllReservations");
         return ResponseEntity.status(HttpStatus.OK)
                 .body(reservationService.findAllReservations());
     }
 
-    @PostMapping("/api/reservations")
+    @PostMapping()
     public ResponseEntity<Reservation> createReservation(
           @RequestBody Reservation reservationToCreate
     ) {
@@ -45,4 +53,18 @@ public class ReservationController {
         // return ReservationService.createReservation(reservationToCreate);
 
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> deleteReservation(
+            @PathVariable("id") Long id
+    ) {
+        try {
+            reservationService.deleteReservation(id);
+            return ResponseEntity.ok().build();
+        }
+         catch (NoSuchElementException e) {
+            return ResponseEntity.status(404).build();
+         }
+    }
+
 }
