@@ -1,6 +1,6 @@
 package com.gerwld.reservation_system;
 
-public enum ReservatiomStatus {
+public enum ReservationStatus {
     PENDING,
     APPROVED,
     CANCELLED

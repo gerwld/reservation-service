@@ -51,7 +51,15 @@ public class ReservationController {
                .header("test-header", "123")
                .body(ReservationService.createReservation(reservationToCreate));
         // return ReservationService.createReservation(reservationToCreate);
+    }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Reservation> updateReservation(
+            @PathVariable Long id,
+            @RequestBody Reservation reservationToUpdate
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ReservationService.updateReservation(id, reservationToUpdate));
     }
 
     @DeleteMapping("/{id}")

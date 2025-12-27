@@ -1,8 +1,6 @@
 package com.gerwld.reservation_system;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -29,11 +27,11 @@ public class ReservationService {
 
         var newReservation = new Reservation(
                 idCounter.incrementAndGet(),
-                reservationToCreate.roomId(),
                 reservationToCreate.userId(),
+                reservationToCreate.roomId(),
                 reservationToCreate.startDate(),
                 reservationToCreate.endDate(),
-                ReservatiomStatus.PENDING
+                ReservationStatus.PENDING
         );
 
         reservationMap.put(newReservation.id(), newReservation);
@@ -60,5 +58,32 @@ public class ReservationService {
 
     public List<Reservation> findAllReservations() {
         return reservationMap.values().stream().toList();
+    }
+
+    public static Reservation updateReservation(
+            Long id,
+            Reservation reservationToUpdate
+    ) {
+        if(!reservationMap.containsKey(id)) {
+            throw new NoSuchElementException("Not found reservation by id: " + id);
+        }
+        if(reservationToUpdate == null) {
+            throw new IllegalArgumentException("Wrong request, reservationToUpdate body parameter is missing");
+        }
+
+        var reservation = reservationMap.get(id);
+        if(reservation.status() != ReservationStatus.PENDING) {
+            throw new IllegalStateException("Cannot modify reservation due to status can be only change from PENDING to *. Current status:" + reservation.status());
+        }
+        var updatedReservation = new Reservation(
+                id,
+                reservationToUpdate.userId(),
+                reservationToUpdate.roomId(),
+                reservationToUpdate.startDate(),
+                reservationToUpdate.endDate(),
+                ReservationStatus.PENDING
+        );
+        reservationMap.put(id, updatedReservation);
+        return updatedReservation;
     }
 }
