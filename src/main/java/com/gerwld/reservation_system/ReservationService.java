@@ -2,21 +2,41 @@ package com.gerwld.reservation_system;
 
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class ReservationService {
+
+
     private static Map<Long, Reservation>  reservationMap;
     private static AtomicLong idCounter; // long для многопоточной среды
-    public ReservationService() {
+
+
+    public ReservationService(ReservationRepository reservationRepository) {
+        this.repo = reservationRepository;
         reservationMap = new HashMap<Long, Reservation>();
         idCounter = new AtomicLong();
     }
 
+    private final ReservationRepository repo;
+
+
+    public List<Reservation> findAllReservations() {
+        List<ReservationEntity> allEntities = repo.findAll();
+
+        return allEntities.stream()
+                .map(it ->
+                    new Reservation(
+                            it.getId(),
+                            it.getUserId(),
+                            it.getRoomId(),
+                            it.getStartDate(),
+                            it.getEndDate(),
+                            it.getStatus()
+                )).toList();
+
+    }
     public static Reservation createReservation(Reservation reservationToCreate) {
         if(reservationToCreate.id() != null) {
             throw new IllegalArgumentException("id should be empty");
@@ -56,9 +76,7 @@ public class ReservationService {
        return reservationMap.get(id);
     }
 
-    public List<Reservation> findAllReservations() {
-        return reservationMap.values().stream().toList();
-    }
+
 
     public static Reservation updateReservation(
             Long id,
