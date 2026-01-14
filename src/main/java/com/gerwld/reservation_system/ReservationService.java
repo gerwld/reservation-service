@@ -1,5 +1,6 @@
 package com.gerwld.reservation_system;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -26,15 +27,8 @@ public class ReservationService {
         List<ReservationEntity> allEntities = repo.findAll();
 
         return allEntities.stream()
-                .map(it ->
-                    new Reservation(
-                            it.getId(),
-                            it.getUserId(),
-                            it.getRoomId(),
-                            it.getStartDate(),
-                            it.getEndDate(),
-                            it.getStatus()
-                )).toList();
+                .map(this::toDomainRegistration) // референс на лямду
+                .toList();
 
     }
     public static Reservation createReservation(Reservation reservationToCreate) {
@@ -70,10 +64,11 @@ public class ReservationService {
     public Reservation getReservationById(
             Long id
     ) {
-       if(!reservationMap.containsKey(id)) {
-           throw new NoSuchElementException("Not found reservation by id: " + id);
-       }
-       return reservationMap.get(id);
+        ReservationEntity reservationById = repo
+                .findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("Not found reservation by id: " + id));
+
+       return toDomainRegistration(reservationById);
     }
 
 
@@ -159,5 +154,16 @@ public class ReservationService {
             }
         }
         return false;
+    }
+
+    private Reservation toDomainRegistration(ReservationEntity reservation) {
+        return new Reservation(
+                reservation.getId(),
+                reservation.getUserId(),
+                reservation.getRoomId(),
+                reservation.getStartDate(),
+                reservation.getEndDate(),
+                reservation.getStatus()
+        );
     }
 }
