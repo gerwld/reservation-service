@@ -55,10 +55,10 @@ public class ReservationService {
     public void deleteReservation(
             Long id
     ) {
-        if(!reservationMap.containsKey(id)) {
+        if(!repo.existsById(id)) {
             throw new NoSuchElementException("Not found reservation by id: " + id);
         }
-        reservationMap.remove(id);
+        repo.deleteById(id);
     }
 
     public Reservation getReservationById(
@@ -67,7 +67,7 @@ public class ReservationService {
         ReservationEntity reservationById = repo
                 .findById(id)
                 .orElseThrow(()-> new EntityNotFoundException("Not found reservation by id: " + id));
-        // либо Optional<ReservationEntity> resById
+        // либо Optional<ReservationEntity> resById и сверка
 
        return toDomainRegistration(reservationById);
     }
@@ -103,55 +103,54 @@ public class ReservationService {
     }
 
     public Reservation approveReservation(Long id) {
-        if(!reservationMap.containsKey(id)) {
-            throw new NoSuchElementException("Not found reservation by id: " + id);
+        var reservationEntity = repo
+                .findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("Not found reservation by id: " + id));
+
+        if(reservationEntity.getStatus().equals(ReservationStatus.APPROVED)) {
+            return toDomainRegistration(reservationEntity);
+        }
+        if(reservationEntity.getStatus() != ReservationStatus.PENDING) {
+            throw new IllegalStateException("Cannot modify reservation due to rule, that status can be only changed  from PENDING to *. Current status:" + reservationEntity.getStatus());
         }
 
-        var reservation = reservationMap.get(id);
-        if(reservation.status().equals(ReservationStatus.APPROVED)) {
-            return reservation;
-        }
-
-        if(reservation.status() != ReservationStatus.PENDING) {
-            throw new IllegalStateException("Cannot modify reservation due to rule, that status can be only changed  from PENDING to *. Current status:" + reservation.status());
-        }
-        var isConflict = isReservationConflict(reservation);
+        var isConflict = isReservationConflict(reservationEntity);
         if(isConflict) {
             throw new IllegalStateException("Cannot approve reservation because of conflict");
         }
 
-        var approvedReservation = new Reservation(
-                id,
-                reservation.userId(),
-                reservation.roomId(),
-                reservation.startDate(),
-                reservation.endDate(),
+        var reservationToSave = new ReservationEntity(
+                reservationEntity.getId(),
+                reservationEntity.getUserId(),
+                reservationEntity.getRoomId(),
+                reservationEntity.getStartDate(),
+                reservationEntity.getEndDate(),
                 ReservationStatus.APPROVED
         );
 
-        reservationMap.put(id, approvedReservation);
-        return approvedReservation;
+        var approvedReservation = repo.save(reservationToSave);
+        return toDomainRegistration(approvedReservation);
     }
 
     private boolean isReservationConflict(
-            Reservation reservation
+            ReservationEntity reservation
     ) {
-        for(Reservation existingReservation: reservationMap.values()) {
+        for(ReservationEntity existingReservation: repo.findAll()) {
             // if current reservation
-            if(reservation.id().equals(existingReservation.id())) {
+            if(reservation.getId().equals(existingReservation.getId())) {
                 continue;
             }
             // if different rooms
-            if(!reservation.roomId().equals(existingReservation.roomId())) {
+            if(!reservation.getRoomId().equals(existingReservation.getRoomId())) {
                 continue;
             }
             // if not approved
-            if(!existingReservation.status().equals(ReservationStatus.APPROVED)) {
+            if(!existingReservation.getStatus().equals(ReservationStatus.APPROVED)) {
                 continue;
             }
-
-            if(reservation.startDate().isBefore(existingReservation.endDate())
-            && existingReservation.startDate().isBefore(reservation.endDate())) {
+            // if there is reservation conflict
+            if(reservation.getStartDate().isBefore(existingReservation.getEndDate())
+            && existingReservation.getStartDate().isBefore(reservation.getEndDate())) {
                 return true;
             }
         }
