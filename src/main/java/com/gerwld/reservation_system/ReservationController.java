@@ -49,7 +49,7 @@ public class ReservationController {
         log.info("Called createReservation");
        return ResponseEntity.status(HttpStatus.CREATED)
                .header("test-header", "123")
-               .body(ReservationService.createReservation(reservationToCreate));
+               .body(reservationService.createReservation(reservationToCreate));
         // return ReservationService.createReservation(reservationToCreate);
     }
 

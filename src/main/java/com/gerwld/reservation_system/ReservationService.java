@@ -31,7 +31,7 @@ public class ReservationService {
                 .toList();
 
     }
-    public static Reservation createReservation(Reservation reservationToCreate) {
+    public Reservation createReservation(Reservation reservationToCreate) {
         if(reservationToCreate.id() != null) {
             throw new IllegalArgumentException("id should be empty");
         }
@@ -39,8 +39,8 @@ public class ReservationService {
             throw new IllegalArgumentException("status should be empty");
         }
 
-        var newReservation = new Reservation(
-                idCounter.incrementAndGet(),
+        var entityToSave = new ReservationEntity(
+                null,
                 reservationToCreate.userId(),
                 reservationToCreate.roomId(),
                 reservationToCreate.startDate(),
@@ -48,8 +48,8 @@ public class ReservationService {
                 ReservationStatus.PENDING
         );
 
-        reservationMap.put(newReservation.id(), newReservation);
-        return reservationMap.get(newReservation.id());
+        var savedEntity = repo.save(entityToSave);
+        return toDomainRegistration(savedEntity);
     }
 
     public void deleteReservation(
@@ -67,6 +67,7 @@ public class ReservationService {
         ReservationEntity reservationById = repo
                 .findById(id)
                 .orElseThrow(()-> new EntityNotFoundException("Not found reservation by id: " + id));
+        // либо Optional<ReservationEntity> resById
 
        return toDomainRegistration(reservationById);
     }
