@@ -60,7 +60,7 @@ public class ReservationController {
     ) {
         log.info("Called updateReservation");
         return ResponseEntity.status(HttpStatus.OK)
-                .body(ReservationService.updateReservation(id, reservationToUpdate));
+                .body(reservationService.updateReservation(id, reservationToUpdate));
     }
 
     @PostMapping("/{id}/approve")

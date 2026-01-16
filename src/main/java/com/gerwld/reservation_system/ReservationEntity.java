@@ -33,7 +33,8 @@ public class ReservationEntity {
         // конструктор по умолчанию для Hibernate
     }
 
-    public ReservationEntity(Long userId, Long roomId, LocalDate startDate, LocalDate endDate, ReservationStatus status) {
+    public ReservationEntity(Long id, Long userId, Long roomId, LocalDate startDate, LocalDate endDate, ReservationStatus status) {
+        this.id = id;
         this.userId = userId;
         this.roomId = roomId;
         this.startDate = startDate;

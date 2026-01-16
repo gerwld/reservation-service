@@ -74,31 +74,32 @@ public class ReservationService {
 
 
 
-    public static Reservation updateReservation(
+    public Reservation updateReservation(
             Long id,
             Reservation reservationToUpdate
     ) {
-        if(!reservationMap.containsKey(id)) {
-            throw new NoSuchElementException("Not found reservation by id: " + id);
-        }
         if(reservationToUpdate == null) {
             throw new IllegalArgumentException("Wrong request, reservationToUpdate is missing");
         }
+        var reservationEntity = repo
+                .findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("Not found reservation by id: " + id));
 
-        var reservation = reservationMap.get(id);
-        if(reservation.status() != ReservationStatus.PENDING) {
-            throw new IllegalStateException("Cannot modify reservation due to rule, that status can be only changed  from PENDING to *. Current status:" + reservation.status());
+
+        if(reservationEntity.getStatus() != ReservationStatus.PENDING) {
+            throw new IllegalStateException("Cannot modify reservation due to rule, " +
+                    "that status can be only changed  from PENDING to *. Current status:" + reservationEntity.getStatus());
         }
-        var updatedReservation = new Reservation(
-                id,
+        var reservationToSave = new ReservationEntity(
+                reservationEntity.getId(),
                 reservationToUpdate.userId(),
                 reservationToUpdate.roomId(),
                 reservationToUpdate.startDate(),
                 reservationToUpdate.endDate(),
                 ReservationStatus.PENDING
         );
-        reservationMap.put(id, updatedReservation);
-        return updatedReservation;
+        var updatedEntity = repo.save(reservationToSave);
+        return toDomainRegistration(updatedEntity);
     }
 
     public Reservation approveReservation(Long id) {
